@@ -4,7 +4,7 @@ from .models import Profile , UserAddress , UserPhoneNumber
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth import authenticate , login , logout
 
 
 
@@ -16,9 +16,22 @@ from django.contrib.auth.models import User
 
 '''
 
-def login(request):
-
-    pass
+def login_page(request):
+    if request.user.is_authenticated:
+        return redirect('profile')
+    else:
+        if request.method == "GET":
+            return render(request,'core/registration/login.html')
+        elif request.method == "POST":
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            user = authenticate(username=username,password=password)
+            if user is not None:
+                login(request,user)
+                return redirect('profile')
+            else:
+                print("wrong username or password")
+                return redirect('login')
     # معالجة عملية تسجيل الدخول هنا
     ...
 
@@ -55,7 +68,7 @@ def signup(request):
                 recipient_list=[email],
                 fail_silently=False,
             )
-            return redirect(f'/accounts/{username}/activate')
+            return redirect(f'/core/{username}/activate')
         
     else:
         form = SignupForm()
@@ -72,7 +85,7 @@ def user_activate(request,username):
             if profile.code == code : 
                 profile.code_used = True
                 profile.save()
-                return redirect('/accounts/login')
+                return redirect('/core/login')
         
     else:
         form = UserActivateForm()
